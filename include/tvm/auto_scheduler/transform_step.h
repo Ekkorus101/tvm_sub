@@ -141,7 +141,7 @@ class IteratorNode : public Object {
  * \brief Managed reference to IteratorNode.
  * \sa IteratorNode
  */
-class Iterator : public ObjectRef {
+class Iterator: public ObjectRef {
  public:
   /*!
    * \brief The constructor.

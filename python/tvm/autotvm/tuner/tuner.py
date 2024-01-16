@@ -129,7 +129,15 @@ class Tuner(object):
             if not self.has_next():
                 break
 
+
+            #TODO : here
             configs = self.next_batch(min(n_parallel, n_trial - i))
+
+            # print("")
+            # print(configs)
+            # print(len(configs))
+            # print(configs[0])
+            # exit(0)
 
             inputs = [MeasureInput(self.task.target, self.task, config) for config in configs]
             results = measure_batch(inputs)

@@ -74,6 +74,16 @@ SketchPolicy::SketchPolicy(SearchTask task, CostModel program_cost_model,
                            Optional<Array<SearchCallback>> init_search_callbacks) {
   auto node = make_object<SketchPolicyNode>();
   node->search_task = std::move(task);
+  //TODO save model structure
+  std::ofstream f("/home/ekkoruse-zqc/myfile/tvm/mlc/dataset/"+node->search_task->workload_key+".json", std::ios::app); 
+  if (f.is_open()) {
+    f<<std::endl;
+    f<<node->search_task->compute_dag->PBRoot.ToJson()<<std::endl;
+    f.close();
+  } else {
+    std::cout << "Unable to open log file." << std::endl;
+  }
+
   node->program_cost_model = std::move(program_cost_model);
   node->rand_gen = std::mt19937(seed);
   node->params = std::move(params);
@@ -243,6 +253,7 @@ std::pair<Array<MeasureInput>, Array<MeasureResult>> SketchPolicyNode::ContinueS
     int num_measure, ProgramMeasurer measurer) {
   num_measure_per_iter_ = num_measure;
 
+//TODO search one round
   Array<State> best_states, random_states;
   Array<MeasureInput> inputs;
   Array<MeasureResult> results;
@@ -295,8 +306,35 @@ Array<State> SketchPolicyNode::SearchOneRound(int num_random_states, Array<State
     sketch_cache_ = GenerateSketches();
   }
 
+  // printf("!!!!!!!!!!!!!-1\n\n\n\n");
+  // std::cout<<sketch_cache_.size()<<std::endl;
+  // for(auto &it:sketch_cache_){
+  //   std::cout<<it.ToStr()<<std::endl;
+  // }
+  // printf("!!!!!!!!!!!!!-2\n\n\n\n");
+
+
+
   // 2. Sample the init population
+  // sample many and choose predict good 
+  printf("!!!!!!!!!!!!!-1\n\n\n\n");
   Array<State> init_population = SampleInitPopulation(sketch_cache_);
+  std::cout<<init_population.size() <<std::endl;
+  for(auto &it : init_population[0]->stages){
+    std::cout<<it->op<<std::endl;
+    for(auto &it2: it->iters){
+      std::cout<<" "<<it2<<" "<<it2->name<<" "<<it2->range<<" "<<std::endl; 
+    }
+  }
+  printf("!!!!!!!!!!!!!-2\n\n\n\n");
+  for(auto &it : init_population[1]->stages){
+    std::cout<<it->op<<std::endl;
+    for(auto &it2: it->iters){
+      std::cout<<" "<<it2<<" "<<it2->name<<" "<<it2->range<<" "<<std::endl; 
+    }
+  }
+  printf("!!!!!!!!!!!!!-3\n\n\n\n");
+  exit(0);
 
   // 3. Perform evolutionary search.
   // Also insert already measured good states to the initial population
@@ -314,6 +352,16 @@ Array<State> SketchPolicyNode::SearchOneRound(int num_random_states, Array<State
 Array<State> SketchPolicyNode::GenerateSketches() {
   const State& init_state = search_task->compute_dag->init_state;
 
+  // printf("!!!!!!!!!!!!!-0-1\n\n\n\n");
+
+  // std::cout<<search_task->compute_dag.PrintDAG(false)<<std::endl;
+
+  // printf("!!!!!!!!!!!!!-0-2\n\n\n\n");
+
+
+
+
+  
   // Two ping pong buffers to avoid copy
   Array<State> states_buf1{init_state}, states_buf2;
   Array<State>* pnow = &states_buf1;
@@ -443,6 +491,7 @@ Array<State> SketchPolicyNode::SampleInitPopulation(const Array<State>& sketches
       for (size_t i = 0; i < cand_states.size(); i++) {
         const auto state_str = cand_states[i].ToStr();
         if (pop_scores[i] > -1e10 && explored_state_strs.count(state_str) == 0) {
+        //TODO do some filter
           explored_state_strs.insert(state_str);
           out_states.push_back(std::move(cand_states[i]));
           unchange_cnt = 0;  // Reset the counter once we found a valid state
@@ -539,6 +588,7 @@ Array<State> SketchPolicyNode::EvolutionarySearch(const Array<State>& init_popul
     // Maintain the heap
     *pnow = search_task->compute_dag.InferBound(*pnow);
     PruneInvalidState(search_task, pnow);
+    //TODO cost model
     program_cost_model->Predict(search_task, *pnow, &pop_scores);
 
     for (size_t i = 0; i < pnow->size(); ++i) {

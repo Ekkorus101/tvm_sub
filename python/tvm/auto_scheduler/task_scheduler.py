@@ -103,6 +103,7 @@ def make_search_policies(
             raise ValueError("Invalid search policy: " + search_policy)
 
         if policy_type == "sketch":
+            #TODO use tasks here and predict and replace preloadmeasuredstates()
             if load_log_file:
                 # use the log file to restore the status of search policies.
                 init_search_callbacks = [PreloadMeasuredStates(load_log_file)]
@@ -444,6 +445,7 @@ class TaskScheduler:
 
     def _tune_task(self, task_idx):
         """Tune the select task for one round"""
+        #TODO tune task
 
         # Run pre-tune callbacks
         for callback in self.callbacks:

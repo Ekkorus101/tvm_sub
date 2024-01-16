@@ -165,13 +165,36 @@ class AccessAnalyzer : public ObjectRef {
   TVM_DEFINE_OBJECT_REF_METHODS(AccessAnalyzer, ObjectRef, AccessAnalyzerNode);
 };
 
+
+class PBComputeMapNode{
+  public:
+    std::string name;
+    std::vector<int> shape;
+    std::vector<int> indexes;
+
+};
+
+class PBComputeMap{
+  public:
+    std::vector<PBComputeMapNode> node;
+    PBComputeMap();
+    PBComputeMap(const Array<te::Tensor>& tensors);
+
+    void Print(std::ostream &s);
+    std::string ToJson() const;
+
+};
+
+
 /*! \brief The auto-scheduler's computational graph and related program analyses. */
 class ComputeDAGNode : public Object {
  public:
+  PBComputeMap PBRoot;
   /*!
    * \brief Input and output tensors.
    * This is used as the input of `tvm.lower` or `tvm.build`.
    */
+
   Array<te::Tensor> tensors;
   /*! \brief All used operations in topo order. */
   Array<te::Operation> ops;
